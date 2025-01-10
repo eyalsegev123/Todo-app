@@ -48,7 +48,7 @@ MONGO_URI=mongodb://127.0.0.1:27017/todoDB
 
 JWT_SECRET=8c07f141f430336f8f48b552e4e31b467ebff2f8b00942e9abbf9dd7fd1742fca5e507f076f5046e48e82a84211b14bacd61ce76482d6ddfd1dc3dd5c369b776
 
-This is a JWT_SECRET I generated for this Project
+##### This is a JWT_SECRET I generated for this Project
 
 #### 5.Start the MongoDB server (if not already running):
 

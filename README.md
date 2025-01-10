@@ -23,6 +23,8 @@ Follow these steps to set up the project locally:
 
 ### 1. Clone the Repository
 
+**Before cloning open VSCode or any other IDE and open the terminal in your desired directory
+
 git clone https://github.com/eyalsegev123/Todo-app.git
 
 cd Todo-app
@@ -37,8 +39,6 @@ cd backend
 npm install
 
 #### 3.Create a .env file in the backend directory:
-
-touch .env
 
 #### 4.Add the following environment variables to the .env file:
 

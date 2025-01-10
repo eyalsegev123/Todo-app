@@ -50,11 +50,22 @@ JWT_SECRET=8c07f141f430336f8f48b552e4e31b467ebff2f8b00942e9abbf9dd7fd1742fca5e50
 
 ##### This is a JWT_SECRET I generated for this Project
 
-#### 5.Start the MongoDB server (if not already running):
+#### 5.Create the todoDB database in MongoDB (or any other name):
+
+Open a terminal and start the MongoDB shell:
+
+mongosh
+
+Run the following command to create the todoDB database:
+
+use todoDB
+
+
+#### 6.Start the MongoDB server (if not already running):
 
 mongod --dbpath your-mongo-data-directory
 
-#### 6.Start the backend server:
+#### 7.Start the backend server:
 
 node server.js
 

@@ -67,6 +67,7 @@ use todoDB
 #### 7.Create the users and tasks collection:
 
 db.createCollection("users")
+
 db.createCollection("tasks")
 
 

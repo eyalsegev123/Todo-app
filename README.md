@@ -24,6 +24,7 @@ Follow these steps to set up the project locally:
 ### 1. Clone the Repository
 
 git clone https://github.com/your-username/Todo-app.git
+
 cd Todo-app
 
 ### 2. Set Up the Backend
@@ -42,7 +43,9 @@ touch .env
 #### 4.Add the following environment variables to the .env file:
 
 PORT=5001
+
 MONGO_URI=mongodb://127.0.0.1:27017/todoDB
+
 JWT_SECRET=<your-jwt-secret-key>
 
 #### 5.Start the MongoDB server (if not already running):
@@ -72,9 +75,12 @@ The frontend will be running at http://localhost:3000.
 
 ## Usage
 Open your browser and go to http://localhost:3000.
+
 Register a new user or log in with an existing account.
+
 Manage your tasks via the tasks page.
 
 ## Notes
 Ensure MongoDB is running locally or modify the MONGO_URI in .env to point to a remote MongoDB instance.
+
 Use a strong and unique JWT_SECRET in your .env file.

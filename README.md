@@ -52,7 +52,7 @@ This is a JWT_SECRET I generated for this Project
 
 #### 5.Start the MongoDB server (if not already running):
 
-mongod --dbpath <your-mongo-data-directory>
+mongod --dbpath your-mongo-data-directory
 
 #### 6.Start the backend server:
 

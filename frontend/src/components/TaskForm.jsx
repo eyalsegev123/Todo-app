@@ -15,6 +15,7 @@ import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
 
 const TaskForm = ({ task, onSubmit, onCancel, error }) => {
+  // Define statusOptions before state and other functions
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -22,6 +23,15 @@ const TaskForm = ({ task, onSubmit, onCancel, error }) => {
     status_id: 1,
     due_date: null
   });
+  
+  const statusOptions = [
+    { value: 1, label: 'Draft' },
+    { value: 2, label: 'In Progress' },
+    { value: 3, label: 'On Hold' },
+    { value: 4, label: 'Completed', disabled: !task },
+    { value: 5, label: 'Deleted', disabled: !task }
+  ];
+
 
   useEffect(() => {
     if (task) {
@@ -41,6 +51,14 @@ const TaskForm = ({ task, onSubmit, onCancel, error }) => {
       due_date: formData.due_date ? formData.due_date.toISOString() : null
     };
     await onSubmit(submitData);
+  };
+
+  const handleDateChange = (newValue) => {
+    // If the date is before today, don't update the form
+    if (newValue && newValue.isBefore(dayjs(), 'day')) {
+      return;
+    }
+    setFormData({ ...formData, due_date: newValue });
   };
 
   return (
@@ -65,10 +83,15 @@ const TaskForm = ({ task, onSubmit, onCancel, error }) => {
           <DatePicker
             label="Due Date"
             value={formData.due_date}
-            onChange={(newValue) => setFormData({ ...formData, due_date: newValue })}
+            onChange={handleDateChange}
+            minDate={dayjs()}
             slotProps={{
               textField: {
-                fullWidth: true
+                fullWidth: true,
+                error: formData.due_date && formData.due_date.isBefore(dayjs(), 'day'),
+                helperText: formData.due_date && formData.due_date.isBefore(dayjs(), 'day') 
+                  ? 'Due date cannot be in the past' 
+                  : null
               }
             }}
           />
@@ -93,11 +116,15 @@ const TaskForm = ({ task, onSubmit, onCancel, error }) => {
             label="Status"
             onChange={(e) => setFormData({ ...formData, status_id: e.target.value })}
           >
-            <MenuItem value={1}>Draft</MenuItem>
-            <MenuItem value={2}>In Progress</MenuItem>
-            <MenuItem value={3}>On Hold</MenuItem>
-            <MenuItem value={4}>Completed</MenuItem>
-            <MenuItem value={5}>Deleted</MenuItem>
+            {statusOptions.map((option) => (
+              <MenuItem
+                key={option.value}
+                value={option.value}
+                disabled={option.disabled} // MenuItem will be disabled based on this prop
+              >
+                {option.label}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
         <Stack direction="row" spacing={2} justifyContent="flex-end">

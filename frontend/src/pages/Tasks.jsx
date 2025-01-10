@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Table,
@@ -7,27 +8,35 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
+  Paper,  // Make sure Paper is included in the imports
   IconButton,
   Button,
   Typography,
   Snackbar,
-  Alert
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import TaskModal from '../components/TaskModal';
 import { getTasks, createTask, updateTask, deleteTask } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const Tasks = () => {
+  const navigate = useNavigate(); // Add this hook
   const [tasks, setTasks] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const { user, logout } = useAuth();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState(null);
 
   useEffect(() => {
     if (!user) {
@@ -40,7 +49,9 @@ const Tasks = () => {
   const fetchTasks = async () => {
     try {
       const data = await getTasks();
-      setTasks(data);
+      // Sort tasks by status_id
+      const sortedTasks = data.sort((a, b) => a.status_id - b.status_id);
+      setTasks(sortedTasks);
     } catch (error) {
       console.error('Error fetching tasks:', error);
     }
@@ -63,56 +74,81 @@ const Tasks = () => {
         return;
       }
 
-      const token = localStorage.getItem('token');
-      console.log('Current auth state:', {
-        token,
-        user,
-        tokenExists: !!token,
-        userExists: !!user
-      });
-
       await createTask(taskData);
       await fetchTasks();
       setError(null);
       handleCloseModal();
       setSuccessMessage('Task created successfully!');
     } catch (error) {
-      console.error('Error details:', {
-        message: error.message,
-        response: error.response,
-        token: !!localStorage.getItem('token')
-      });
-
-      // Handle authentication errors
-      if (error.response?.status === 401) {
-        setError('Session expired. Please login again.');
-        logout(); // Clear invalid auth state
-        return;
+      if (error.message === 'Session expired. Please login again.') {
+        logout();
+        navigate('/');
+      } else {
+        setError(error.message || 'Failed to create task');
       }
-
-      setError(error.message || 'Failed to create task');
     }
   };
 
   const handleUpdateTask = async (taskData) => {
     try {
-      await updateTask(taskData.task_id, taskData);
+      if (!taskData.task_id) {
+        setError('Task ID is missing');
+        return;
+      }
+
+      const updateData = {
+        title: taskData.title,
+        description: taskData.description,
+        priority_id: Number(taskData.priority_id),
+        status_id: Number(taskData.status_id),
+        due_date: taskData.due_date
+      };
+
+      await updateTask(taskData.task_id, updateData);
       await fetchTasks();
       setError(null);
-      handleCloseModal(); // Only close after successful update
+      handleCloseModal();
       setSuccessMessage('Task updated successfully!');
     } catch (error) {
-      setError(error.message || 'Failed to update task');
+      if (error.message === 'Session expired. Please login again.') {
+        logout();
+        navigate('/');
+      } else {
+        setError(error.message || 'Failed to update task');
+      }
     }
   };
 
-  const handleDeleteTask = async (taskId) => {
+  const handleCompleteTask = async (taskId) => {
     try {
-      await deleteTask(taskId);
-      fetchTasks();
+      await updateTask(taskId, { status_id: 4 });
+      await fetchTasks();
+      setSuccessMessage('Task marked as completed!');
     } catch (error) {
-      console.error('Error deleting task:', error);
+      setError(error.message || 'Failed to complete task');
     }
+  };
+
+  const handleDeleteClick = (task) => {
+    setTaskToDelete(task);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async (permanent) => {
+    try {
+      if (permanent) {
+        await deleteTask(taskToDelete.task_id);
+        setSuccessMessage('Task permanently deleted!');
+      } else {
+        await updateTask(taskToDelete.task_id, { status_id: 5 });
+        setSuccessMessage('Task marked as deleted!');
+      }
+      await fetchTasks();
+    } catch (error) {
+      setError(error.message || 'Failed to delete task');
+    }
+    setDeleteDialogOpen(false);
+    setTaskToDelete(null);
   };
 
   const getPriorityText = (priority_id) => {
@@ -152,79 +188,110 @@ const Tasks = () => {
         justifyContent: 'space-between', 
         alignItems: 'center',
         marginBottom: '2rem' // Added this line
-      }}>
-        <Typography variant="h4" component="h1">
-          My To-Do List
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenModal()}
-          sx={{ backgroundColor: '#1a1a1a', '&:hover': { backgroundColor: '#2a2a2a' } }}
-        >
-          Add New Task
-        </Button>
-      </div>
-
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Title</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell>Due Date</TableCell>
-              <TableCell>Priority</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {tasks.map((task) => (
-              <TableRow key={task.task_id}>
-                <TableCell>{task.title}</TableCell>
-                <TableCell>{task.description}</TableCell>
-                <TableCell>{formatDate(task.due_date)}</TableCell>
-                <TableCell>{getPriorityText(task.priority_id)}</TableCell>
-                <TableCell>{getStatusText(task.status_id)}</TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleOpenModal(task)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => handleDeleteTask(task.task_id)}>
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <TaskModal
-        open={isModalOpen}
-        onClose={handleCloseModal}
-        task={editingTask}
-        onSubmit={editingTask ? handleUpdateTask : handleAddTask}
-        error={error}
-      />
-      <Snackbar 
-        open={!!error} 
-        autoHideDuration={6000} 
-        onClose={() => setError(null)}
+    }}>
+      <Typography variant="h4" component="h1">
+        My To-Do List
+      </Typography>
+      <Button
+        variant="contained"
+        startIcon={<AddIcon />}
+        onClick={() => handleOpenModal()}
+        sx={{ backgroundColor: '#1a1a1a', '&:hover': { backgroundColor: '#2a2a2a' } }}
       >
-        <Alert severity="error" onClose={() => setError(null)}>
-          {error}
-        </Alert>
-      </Snackbar>
-      <Snackbar
-        open={!!successMessage}
-        autoHideDuration={4000}
-        onClose={() => setSuccessMessage(null)}
-      >
-        <Alert severity="success" onClose={() => setSuccessMessage(null)}>
-          {successMessage}
-        </Alert>
-      </Snackbar>
+        Add New Task
+      </Button>
+    </div>
+
+    <TableContainer component={Paper}>
+      <Table>
+        <TableHead>
+        <TableRow>
+          <TableCell>Title</TableCell>
+          <TableCell>Description</TableCell>
+          <TableCell>Due Date</TableCell>
+          <TableCell>Priority</TableCell>
+          <TableCell>Status</TableCell>
+          <TableCell>Actions</TableCell>
+        </TableRow>
+        </TableHead>
+        <TableBody>
+        {tasks.map((task) => (
+          <TableRow 
+            key={task.task_id}
+            // Optional: Add different styling for different statuses
+            sx={{ 
+              backgroundColor: task.status_id === 4 ? 'rgba(0, 200, 0, 0.1)' : 
+                             task.status_id === 5 ? 'rgba(200, 0, 0, 0.1)' : 
+                             'inherit'
+            }}
+          >
+            <TableCell>{task.title}</TableCell>
+            <TableCell>{task.description}</TableCell>
+            <TableCell>{formatDate(task.due_date)}</TableCell>
+            <TableCell>{getPriorityText(task.priority_id)}</TableCell>
+            <TableCell>{getStatusText(task.status_id)}</TableCell>
+            <TableCell>
+            <IconButton onClick={() => handleOpenModal(task)}>
+              <EditIcon />
+            </IconButton>
+            {task.status_id !== 4 && task.status_id !== 5 && (
+              <IconButton 
+                onClick={() => handleCompleteTask(task.task_id)}
+                color="success"
+              >
+                <CheckCircleIcon />
+              </IconButton>
+            )}
+            <IconButton onClick={() => handleDeleteClick(task)}>
+              <DeleteIcon />
+            </IconButton>
+            </TableCell>
+          </TableRow>
+        ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+
+    <TaskModal
+      open={isModalOpen}
+      onClose={handleCloseModal}
+      task={editingTask}
+      onSubmit={editingTask ? handleUpdateTask : handleAddTask}
+      error={error}
+    />
+    <Snackbar 
+      open={!!error} 
+      autoHideDuration={6000} 
+      onClose={() => setError(null)}
+    >
+      <Alert severity="error" onClose={() => setError(null)}>
+        {error}
+      </Alert>
+    </Snackbar>
+    <Snackbar
+      open={!!successMessage}
+      autoHideDuration={4000}
+      onClose={() => setSuccessMessage(null)}
+    >
+      <Alert severity="success" onClose={() => setSuccessMessage(null)}>
+        {successMessage}
+      </Alert>
+    </Snackbar>
+
+    {/* Add Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Delete Task</DialogTitle>
+        <DialogContent>
+          Do you want to delete this task permanently or mark it as deleted?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => handleDeleteConfirm(false)}>Mark as Deleted</Button>
+          <Button onClick={() => handleDeleteConfirm(true)} color="error">
+            Delete Permanently
+          </Button>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

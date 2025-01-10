@@ -4,15 +4,25 @@ const API_URL = 'http://localhost:5001/api';
 
 const getAuthHeader = () => {
   const token = localStorage.getItem('token');
-  console.log('Current token:', token); // Debug log
   if (!token) {
     throw new Error('No authentication token found');
   }
-  // Add 'Bearer' prefix here
   return { 
-    Authorization: `Bearer ${token.replace('Bearer ', '')}`, // Remove any existing Bearer prefix
+    Authorization: `Bearer ${token.replace('Bearer ', '')}`,
     'Content-Type': 'application/json'
   };
+};
+
+// Add this function to handle token expiration
+const handleTokenExpiration = async (error) => {
+  if (error.response?.data?.isExpired) {
+    // Only clear token and redirect if it's specifically an expired token
+    localStorage.removeItem('token');
+    window.location.href = '/';
+    throw new Error('Session expired. Please login again.');
+  }
+  // For all other errors, just throw them normally
+  throw error.response?.data?.error || error.message;
 };
 
 export const login = async (credentials) => {
@@ -50,30 +60,17 @@ export const getTasks = async () => {
     });
     return response.data;
   } catch (error) {
-    throw error.response?.data?.error || error.message;
+    return handleTokenExpiration(error);
   }
 };
 
 export const createTask = async (taskData) => {
   try {
     const headers = getAuthHeader();
-    console.log('Making request with:', {
-      url: `${API_URL}/tasks`,
-      headers,
-      data: taskData
-    });
-
     const response = await axios.post(`${API_URL}/tasks`, taskData, { headers });
     return response.data;
   } catch (error) {
-    console.error('Create task error details:', {
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      headers: error.response?.headers,
-      originalError: error
-    });
-    throw error.response?.data?.error || error.message;
+    return handleTokenExpiration(error);
   }
 };
 
@@ -84,7 +81,7 @@ export const updateTask = async (taskId, taskData) => {
     });
     return response.data;
   } catch (error) {
-    throw error.response?.data?.error || error.message;
+    return handleTokenExpiration(error);
   }
 };
 
@@ -95,7 +92,7 @@ export const deleteTask = async (taskId) => {
     });
     return response.data;
   } catch (error) {
-    throw error.response?.data?.error || error.message;
+    return handleTokenExpiration(error);
   }
 };
 

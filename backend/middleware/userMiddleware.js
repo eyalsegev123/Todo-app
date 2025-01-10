@@ -13,11 +13,21 @@ const verifyToken = (req, res, next) => {
     const token = authHeader.replace('Bearer ', '');
     console.log('Token extracted (without Bearer):', token); // Debug log
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('Decoded token payload:', decoded); // Debug log
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log('Decoded token payload:', decoded); // Debug log
 
-    req.user = decoded;
-    next();
+      req.user = decoded;
+      next();
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        return res.status(401).json({ 
+          error: 'Token expired',
+          isExpired: true
+        });
+      }
+      throw error;
+    }
   } catch (error) {
     console.error('Token verification error:', error);
     return res.status(401).json({ error: 'Invalid token' });

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { AppBar, Toolbar, Typography, Box, Button } from '@mui/material';
-import { Link, useNavigate } from 'react-router-dom';
+import { AppBar, Toolbar, Box, Button } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import RegisterModal from './RegisterModal';
-import HeaderButton from './HeaderButton';
+import HomeButton from './HomeButton';
 import LoginModal from './LoginModal';
+import HeaderButton from './HeaderButton';
 
 const Header = () => {
   const [loginOpen, setLoginOpen] = useState(false);
@@ -22,22 +23,41 @@ const Header = () => {
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
           {/* Left section - Logo */}
-          <Typography variant="h6" component="div">
-            <Link to="/" style={{ color: 'black', textDecoration: 'none' }}>
-              JustDoIt
-            </Link>
-          </Typography>
+          <HomeButton onClick={() => navigate('/')} />
 
           {/* Right section - User controls */}
           <Box>
             {user ? (
               <>
-                <Typography variant="subtitle1" component="span" sx={{ mr: 2 }}>
+                <Button 
+                  variant="contained"
+                  style={{ backgroundColor: '#1a1a1a', color: 'white', padding: '8px 16px', borderRadius: '4px' }}
+                  sx={{
+                    mr: 2,
+                    '&:hover': {
+                      backgroundColor: '#2a2a2a',
+                      transform: 'scale(1.05)',
+                      transition: 'transform 0.2s ease-in-out'
+                    }
+                  }}
+                  disabled
+                > 
                   Hello, {user?.username}
-                </Typography>
-                <Button variant="contained" color="secondary" onClick={handleLogout}>
-                  Logout
                 </Button>
+                
+                <HeaderButton 
+                  label="Logout" 
+                  onClick={() => handleLogout()} 
+                  variant="contained"
+                  style={{ backgroundColor: '#1a1a1a', color: 'white' }}
+                  sx={{ 
+                    '&:hover': {
+                      backgroundColor: '#2a2a2a',
+                      transform: 'scale(1.05)',
+                      transition: 'transform 0.2s ease-in-out'
+                    }
+                  }}
+                />
               </>
             ) : (
               <>
@@ -45,14 +65,28 @@ const Header = () => {
                   label="Login" 
                   onClick={() => setLoginOpen(true)} 
                   variant="contained"
-                  color="secondary"
+                  style={{ backgroundColor: '#1a1a1a', color: 'white' }}
+                  sx={{ 
+                    '&:hover': {
+                      backgroundColor: '#2a2a2a',
+                      transform: 'scale(1.05)',
+                      transition: 'transform 0.2s ease-in-out'
+                    }
+                  }}
                 />
                 <HeaderButton 
                   label="Register" 
                   onClick={() => setRegisterOpen(true)} 
                   variant="contained"
-                  color="secondary"
-                  sx={{ ml: 2 }}
+                  style={{ backgroundColor: '#1a1a1a', color: 'white' }}
+                  sx={{ 
+                    ml: 2,
+                    '&:hover': {
+                      backgroundColor: '#2a2a2a',
+                      transform: 'scale(1.05)',
+                      transition: 'transform 0.2s ease-in-out'
+                    }
+                  }}
                 />
               </>
             )}

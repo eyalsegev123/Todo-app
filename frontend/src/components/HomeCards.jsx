@@ -42,7 +42,6 @@ const StyledWrapper = styled.div`
     border-radius: 10px;
     color: white;
     background-color: #1a1a1a;
-    cursor: pointer;
     transition: 400ms;
   }
 

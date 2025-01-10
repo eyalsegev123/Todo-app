@@ -7,6 +7,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Alert,
+  Collapse
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -15,7 +17,6 @@ import dayjs from 'dayjs';
 import PropTypes from 'prop-types';
 
 const TaskForm = ({ task, onSubmit, onCancel, error }) => {
-  // Define statusOptions before state and other functions
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -23,7 +24,8 @@ const TaskForm = ({ task, onSubmit, onCancel, error }) => {
     status_id: 1,
     due_date: null
   });
-  
+  const [dateError, setDateError] = useState('');
+
   const statusOptions = [
     { value: 1, label: 'Draft' },
     { value: 2, label: 'In Progress' },
@@ -31,7 +33,6 @@ const TaskForm = ({ task, onSubmit, onCancel, error }) => {
     { value: 4, label: 'Completed', disabled: !task },
     { value: 5, label: 'Deleted', disabled: !task }
   ];
-
 
   useEffect(() => {
     if (task) {
@@ -44,26 +45,53 @@ const TaskForm = ({ task, onSubmit, onCancel, error }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const submitData = {
       ...formData,
       priority_id: Number(formData.priority_id),
       status_id: Number(formData.status_id),
-      due_date: formData.due_date ? formData.due_date.toISOString() : null
+      due_date: formData.due_date && formData.due_date.isValid() 
+        ? formData.due_date.format('YYYY-MM-DD') 
+        : null
     };
     await onSubmit(submitData);
   };
 
   const handleDateChange = (newValue) => {
-    // If the date is before today, don't update the form
-    if (newValue && newValue.isBefore(dayjs(), 'day')) {
+    setDateError(''); // Clear previous errors
+
+    // If no date is selected (clearing the field)
+    if (!newValue) {
+      setFormData({ ...formData, due_date: null });
       return;
     }
-    setFormData({ ...formData, due_date: newValue });
+
+    // Ensure we're working with start of day for consistent comparison
+    const today = dayjs().startOf('day');
+    const selectedDate = newValue.startOf('day');
+
+    // Check if the date is valid and not before today
+    if (!selectedDate.isValid()) {
+      setDateError('Please enter a valid date');
+      return;
+    }
+
+    if (selectedDate.isBefore(today)) {
+      setDateError('Due date cannot be in the past');
+      return;
+    }
+
+    setFormData({ ...formData, due_date: selectedDate });
   };
 
   return (
     <form onSubmit={handleSubmit}>
       <Stack spacing={2} sx={{ mt: 2 }}>
+        <Collapse in={!!dateError}>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {dateError}
+          </Alert>
+        </Collapse>
         <TextField
           fullWidth
           label="Title"
@@ -84,14 +112,13 @@ const TaskForm = ({ task, onSubmit, onCancel, error }) => {
             label="Due Date"
             value={formData.due_date}
             onChange={handleDateChange}
-            minDate={dayjs()}
+            minDate={dayjs().startOf('day')}
+            disablePast
             slotProps={{
               textField: {
                 fullWidth: true,
-                error: formData.due_date && formData.due_date.isBefore(dayjs(), 'day'),
-                helperText: formData.due_date && formData.due_date.isBefore(dayjs(), 'day') 
-                  ? 'Due date cannot be in the past' 
-                  : null
+                error: !!dateError,
+                helperText: dateError
               }
             }}
           />

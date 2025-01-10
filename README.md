@@ -63,7 +63,7 @@ use todoDB
 
 #### 6.Start the MongoDB server (if not already running):
 
-mongod --dbpath your-mongo-data-directory
+mongod --dbpath    your-mongo-data-directory
 
 #### 7.Start the backend server:
 

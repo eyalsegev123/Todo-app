@@ -65,11 +65,17 @@ The backend will be running at http://localhost:5001.
 
 cd ../frontend
 
-#### 2.Install dependencies:
+#### 2. Create a .env file:
+
+Create a .env file in the frontend directory and add the following content:
+
+REACT_APP_API_URL=http://localhost:5001/api
+
+#### 3.Install dependencies:
 
 npm install
 
-#### 3.Start the React development server:
+#### 4.Start the React development server:
 
 npm start
 

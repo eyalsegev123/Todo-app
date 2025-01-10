@@ -23,7 +23,7 @@ Follow these steps to set up the project locally:
 
 ### 1. Clone the Repository
 
-git clone https://github.com/your-username/Todo-app.git
+git clone https://github.com/eyalsegev123/Todo-app.git
 
 cd Todo-app
 

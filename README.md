@@ -90,5 +90,3 @@ Manage your tasks via the tasks page.
 
 ## Notes
 Ensure MongoDB is running locally or modify the MONGO_URI in .env to point to a remote MongoDB instance.
-
-Use a strong and unique JWT_SECRET in your .env file.
